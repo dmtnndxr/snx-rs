@@ -22,6 +22,8 @@ pub struct CmdlineParams {
     pub command: Option<TrayEvent>,
     #[clap(long = "completions", help = "Generate shell completions for the given shell")]
     pub completions: Option<clap_complete::Shell>,
+    #[clap(long = "no-tray", help = "Start without a system tray icon (use a window fallback instead)")]
+    pub no_tray: bool,
 }
 
 impl CmdlineParams {

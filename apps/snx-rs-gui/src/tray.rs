@@ -11,6 +11,7 @@ use snxcore::model::{
 };
 use tokio::sync::mpsc::{Receiver, Sender};
 use uuid::Uuid;
+use tracing::warn;
 
 use crate::{
     assets,
@@ -68,12 +69,26 @@ enum PixmapOrName {
     Name(&'static str),
 }
 
+enum TrayBackend {
+    Ksni(Handle<KsniTray>),
+    Disabled,
+}
+
+impl TrayBackend {
+    async fn update(&self, f: impl FnOnce(&mut KsniTray) + Send + 'static) {
+        if let TrayBackend::Ksni(handle) = self {
+            handle.update(f).await;
+        }
+    }
+}
+
 pub struct AppTray {
     command_sender: Sender<TrayCommand>,
     command_receiver: Option<Receiver<TrayCommand>>,
     status: Arc<anyhow::Result<ConnectionStatus>>,
     config_file: PathBuf,
-    tray_icon: Handle<KsniTray>,
+    tray_icon: TrayBackend,
+    tray_available: bool,
 }
 
 impl AppTray {
@@ -81,14 +96,25 @@ impl AppTray {
         let (tx, rx) = tokio::sync::mpsc::channel(16);
 
         let tray_icon = KsniTray::new(event_sender);
-        let handle = tray_icon.spawn().await?;
+        let (tray_icon, tray_available) = if params.no_tray {
+            (TrayBackend::Disabled, false)
+        } else {
+            match tray_icon.spawn().await {
+                Ok(handle) => (TrayBackend::Ksni(handle), true),
+                Err(e) => {
+                    warn!("System tray unavailable, running without tray icon: {e}");
+                    (TrayBackend::Disabled, false)
+                }
+            }
+        };
 
         let app_tray = AppTray {
             command_sender: tx,
             command_receiver: Some(rx),
             status: Arc::new(Err(anyhow!(crate::tr!("error-no-service-connection")))),
             config_file: params.config_file().clone(),
-            tray_icon: handle,
+            tray_icon,
+            tray_available,
         };
 
         app_tray.update().await;
@@ -98,6 +124,10 @@ impl AppTray {
 
     pub fn sender(&self) -> Sender<TrayCommand> {
         self.command_sender.clone()
+    }
+
+    pub fn has_tray(&self) -> bool {
+        self.tray_available
     }
 
     fn status_label(&self) -> String {

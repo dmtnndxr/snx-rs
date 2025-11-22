@@ -107,6 +107,11 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let mut my_tray = tray::AppTray::new(&cmdline_params, tray_event_sender.clone()).await?;
+    let tray_available = my_tray.has_tray();
+    let should_show_fallback = !tray_available && cmdline_params.command.is_none();
+    if !tray_available {
+        warn!("StatusNotifierWatcher not found, running without a system tray icon");
+    }
 
     let tray_command_sender = my_tray.sender();
 
@@ -163,6 +168,7 @@ async fn main() -> anyhow::Result<()> {
         }
     ));
 
+    let tray_event_sender3 = tray_event_sender.clone();
     app.connect_activate(move |app| {
         let app_window = ApplicationWindow::builder().application(app).visible(false).build();
 
@@ -176,6 +182,15 @@ async fn main() -> anyhow::Result<()> {
         );
 
         set_window("main", Some(app_window));
+
+        if should_show_fallback {
+            glib::spawn_future_local({
+                let sender = tray_event_sender3.clone();
+                async move {
+                    let _ = sender.send(TrayEvent::Status).await;
+                }
+            });
+        }
     });
 
     if let Some(mut command) = cmdline_params.command {
