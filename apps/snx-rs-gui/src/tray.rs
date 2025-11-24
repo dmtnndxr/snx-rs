@@ -10,8 +10,8 @@ use snxcore::model::{
     params::{DEFAULT_PROFILE_UUID, IconTheme, TunnelParams},
 };
 use tokio::sync::mpsc::{Receiver, Sender};
-use uuid::Uuid;
 use tracing::warn;
+use uuid::Uuid;
 
 use crate::{
     assets,
@@ -289,7 +289,10 @@ impl ksni::Tray for KsniTray {
     }
 
     fn menu(&self) -> Vec<MenuItem<Self>> {
-        let profiles = TunnelParams::load_all().into_iter().map(sanitize_params).collect::<Vec<_>>();
+        let profiles = TunnelParams::load_all()
+            .into_iter()
+            .map(sanitize_params)
+            .collect::<Vec<_>>();
         let connect_item = if profiles.len() < 2 {
             MenuItem::Standard(StandardItem {
                 label: crate::tr!("tray-menu-connect").to_string(),

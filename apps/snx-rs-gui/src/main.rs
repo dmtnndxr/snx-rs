@@ -166,9 +166,7 @@ async fn main() -> anyhow::Result<()> {
                         let (tx, rx) = mpsc::channel(16);
                         cancel_sender = Some(tx);
                         let profiles = TunnelParams::load_all();
-                        if let Some(params) =
-                            profiles.into_iter().map(sanitize_params).find(|p| p.profile_id == uuid)
-                        {
+                        if let Some(params) = profiles.into_iter().map(sanitize_params).find(|p| p.profile_id == uuid) {
                             tokio::spawn(async move { do_connect(sender, Arc::new(params), rx).await });
                         }
                     }
@@ -287,8 +285,9 @@ async fn status_poll(
     let mut old_status = String::new();
 
     loop {
-        let tunnel_params =
-            Arc::new(sanitize_params(TunnelParams::load(params.config_file()).unwrap_or_default()));
+        let tunnel_params = Arc::new(sanitize_params(
+            TunnelParams::load(params.config_file()).unwrap_or_default(),
+        ));
 
         let status = controller.command(ServiceCommand::Status, tunnel_params.clone()).await;
         let status_str = format!("{status:?}");

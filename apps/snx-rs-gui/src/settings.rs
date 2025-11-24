@@ -1421,10 +1421,7 @@ impl SettingsDialog {
     }
 
     fn load_profiles(params: Arc<TunnelParams>) -> Vec<TunnelParams> {
-        let mut result: Vec<TunnelParams> = TunnelParams::load_all()
-            .into_iter()
-            .map(sanitize_params)
-            .collect();
+        let mut result: Vec<TunnelParams> = TunnelParams::load_all().into_iter().map(sanitize_params).collect();
         if result.is_empty() {
             result.push(sanitize_params((*params).clone()));
         }
