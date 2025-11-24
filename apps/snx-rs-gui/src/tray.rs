@@ -16,6 +16,7 @@ use tracing::warn;
 use crate::{
     assets,
     params::CmdlineParams,
+    sanitize_params,
     theme::{SystemColorTheme, system_color_theme},
 };
 
@@ -138,7 +139,7 @@ impl AppTray {
     }
 
     fn icon_theme(&self) -> &'static assets::IconTheme {
-        let tunnel_params = TunnelParams::load(&self.config_file).unwrap_or_default();
+        let tunnel_params = sanitize_params(TunnelParams::load(&self.config_file).unwrap_or_default());
 
         let system_theme = match tunnel_params.icon_theme {
             IconTheme::AutoDetect => system_color_theme().ok().unwrap_or_default(),
@@ -288,7 +289,7 @@ impl ksni::Tray for KsniTray {
     }
 
     fn menu(&self) -> Vec<MenuItem<Self>> {
-        let profiles = TunnelParams::load_all();
+        let profiles = TunnelParams::load_all().into_iter().map(sanitize_params).collect::<Vec<_>>();
         let connect_item = if profiles.len() < 2 {
             MenuItem::Standard(StandardItem {
                 label: crate::tr!("tray-menu-connect").to_string(),

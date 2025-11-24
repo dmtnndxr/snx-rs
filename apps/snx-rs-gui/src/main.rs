@@ -41,6 +41,28 @@ thread_local! {
     static WINDOWS: RefCell<HashMap<String, Window>> = RefCell::new(HashMap::new());
 }
 
+pub(crate) fn sanitize_params(mut params: TunnelParams) -> TunnelParams {
+    let mut needs_save = false;
+
+    if !params.password.is_empty() {
+        params.password.clear();
+        needs_save = true;
+    }
+
+    if !params.no_keychain {
+        params.no_keychain = true;
+        needs_save = true;
+    }
+
+    if needs_save {
+        if let Err(e) = params.save() {
+            warn!("Failed to persist password removal: {}", e);
+        }
+    }
+
+    params
+}
+
 pub fn main_window() -> ApplicationWindow {
     get_window("main").unwrap().downcast::<ApplicationWindow>().unwrap()
 }
@@ -74,7 +96,9 @@ async fn main() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    let tunnel_params = Arc::new(TunnelParams::load(cmdline_params.config_file()).unwrap_or_default());
+    let tunnel_params = Arc::new(sanitize_params(
+        TunnelParams::load(cmdline_params.config_file()).unwrap_or_default(),
+    ));
 
     init_logging(&tunnel_params);
 
@@ -135,14 +159,16 @@ async fn main() -> anyhow::Result<()> {
             let mut cancel_sender = None;
 
             while let Some(v) = tray_event_receiver.recv().await {
-                let params = Arc::new(TunnelParams::load(&config_file).unwrap_or_default());
+                let params = Arc::new(sanitize_params(TunnelParams::load(&config_file).unwrap_or_default()));
                 match v {
                     TrayEvent::Connect(uuid) => {
                         let sender = tray_command_sender.clone();
                         let (tx, rx) = mpsc::channel(16);
                         cancel_sender = Some(tx);
                         let profiles = TunnelParams::load_all();
-                        if let Some(params) = profiles.into_iter().find(|p| p.profile_id == uuid) {
+                        if let Some(params) =
+                            profiles.into_iter().map(sanitize_params).find(|p| p.profile_id == uuid)
+                        {
                             tokio::spawn(async move { do_connect(sender, Arc::new(params), rx).await });
                         }
                     }
@@ -261,7 +287,8 @@ async fn status_poll(
     let mut old_status = String::new();
 
     loop {
-        let tunnel_params = Arc::new(TunnelParams::load(params.config_file()).unwrap_or_default());
+        let tunnel_params =
+            Arc::new(sanitize_params(TunnelParams::load(params.config_file()).unwrap_or_default()));
 
         let status = controller.command(ServiceCommand::Status, tunnel_params.clone()).await;
         let status_str = format!("{status:?}");

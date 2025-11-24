@@ -30,7 +30,7 @@ fn set_container_visible(widget: &Widget, flag: bool) {
     }
 }
 
-use crate::{get_window, set_window, tr, tray::TrayCommand};
+use crate::{get_window, sanitize_params, set_window, tr, tray::TrayCommand};
 
 struct SettingsDialog {
     params: Arc<TunnelParams>,
@@ -164,7 +164,7 @@ impl MyWidgets {
         self.auth_type.set_active_id(Some(&params.login_type));
         self.tunnel_type.set_active_id(Some(&params.tunnel_type.to_string()));
         self.username.set_text(&params.user_name);
-        self.password.set_text(&params.password);
+        self.password.set_text("");
         self.password_factor.set_text(&params.password_factor.to_string());
         self.no_dns.set_active(params.no_dns);
         self.search_domains.set_text(&params.search_domains.join(","));
@@ -180,7 +180,7 @@ impl MyWidgets {
             .set_text(&params.add_routes.iter().map(|ip| ip.to_string()).join(","));
         self.ignored_routes
             .set_text(&params.ignore_routes.iter().map(|ip| ip.to_string()).join(","));
-        self.no_keychain.set_active(params.no_keychain);
+        self.no_keychain.set_active(true);
         self.no_cert_check.set_active(params.ignore_server_cert);
         self.cert_type.set_active_id(Some(&params.cert_type.to_string()));
         self.cert_path.set_text(
@@ -419,7 +419,9 @@ impl SettingsDialog {
             .text(&params.user_name)
             .placeholder_text(std::env::var("USER").unwrap_or_default())
             .build();
-        let password = gtk4::Entry::builder().text(&params.password).visibility(false).build();
+        let password = gtk4::Entry::builder().visibility(false).build();
+        password.set_sensitive(false);
+        password.set_visible(false);
         let password_factor = gtk4::Entry::builder().text(params.password_factor.to_string()).build();
 
         let no_dns = gtk4::Switch::builder()
@@ -499,7 +501,8 @@ impl SettingsDialog {
             .build();
 
         let no_keychain = gtk4::Switch::builder()
-            .active(params.no_keychain)
+            .active(true)
+            .sensitive(false)
             .halign(Align::Start)
             .build();
         let no_cert_check = gtk4::Switch::builder()
@@ -780,7 +783,7 @@ impl SettingsDialog {
             _ => TunnelType::Ssl,
         };
         params.user_name = self.widgets.username.text().into();
-        params.password = self.widgets.password.text().into();
+        params.password.clear();
         params.password_factor = self.widgets.password_factor.text().parse()?;
         params.no_dns = self.widgets.no_dns.is_active();
         params.set_routing_domains = self.widgets.set_routing_domains.is_active();
@@ -830,7 +833,7 @@ impl SettingsDialog {
             .split(',')
             .flat_map(|s| parse_ipv4_or_subnet(s).ok())
             .collect();
-        params.no_keychain = self.widgets.no_keychain.is_active();
+        params.no_keychain = true;
         params.ignore_server_cert = self.widgets.no_cert_check.is_active();
         params.cert_type = self.widgets.cert_type.active().unwrap_or_default().into();
         params.cert_path = {
@@ -1026,12 +1029,6 @@ impl SettingsDialog {
         user_box
     }
 
-    fn password_box(&self) -> gtk4::Box {
-        let password_box = self.form_box(&tr!("label-password"));
-        password_box.append(&self.widgets.password);
-        password_box
-    }
-
     fn dns_box(&self) -> gtk4::Box {
         let dns_box = gtk4::Box::builder()
             .orientation(Orientation::Vertical)
@@ -1106,6 +1103,7 @@ impl SettingsDialog {
 
         let no_keychain = self.form_box(&tr!("label-no-keychain"));
         no_keychain.append(&self.widgets.no_keychain);
+        no_keychain.set_visible(false);
         misc_box.append(&no_keychain);
 
         let ike_lifetime = self.form_box(&tr!("label-ike-lifetime"));
@@ -1206,7 +1204,6 @@ impl SettingsDialog {
             .visible(false)
             .build();
         user_auth_box.append(&self.user_box());
-        user_auth_box.append(&self.password_box());
 
         user_auth_box
     }
@@ -1424,9 +1421,12 @@ impl SettingsDialog {
     }
 
     fn load_profiles(params: Arc<TunnelParams>) -> Vec<TunnelParams> {
-        let mut result = TunnelParams::load_all();
+        let mut result: Vec<TunnelParams> = TunnelParams::load_all()
+            .into_iter()
+            .map(sanitize_params)
+            .collect();
         if result.is_empty() {
-            result.push((*params).clone());
+            result.push(sanitize_params((*params).clone()));
         }
         result
     }

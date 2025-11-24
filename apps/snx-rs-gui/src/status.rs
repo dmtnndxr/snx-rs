@@ -15,7 +15,7 @@ use snxcore::{
 };
 use tokio::sync::mpsc::Sender;
 
-use crate::{get_window, main_window, prompt::GtkPrompt, set_window, tr, tray::TrayEvent};
+use crate::{get_window, main_window, prompt::GtkPrompt, sanitize_params, set_window, tr, tray::TrayEvent};
 
 fn status_entry(label: &str, value: &str) -> gtk4::Box {
     let form = gtk4::Box::builder()
@@ -105,7 +105,10 @@ pub async fn show_status_dialog(sender: Sender<TrayEvent>, params: Arc<TunnelPar
         .halign(Align::End)
         .build();
 
-    let profiles = TunnelParams::load_all();
+    let profiles = TunnelParams::load_all()
+        .into_iter()
+        .map(sanitize_params)
+        .collect::<Vec<_>>();
 
     let connect = if profiles.len() < 2 {
         let sender2 = sender.clone();
