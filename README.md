@@ -20,6 +20,7 @@ For NixOS follow the specific [configuration instructions](https://github.com/an
 
 1. Download the installer from the releases section, then: `chmod +x snx-rs-*-linux-x86_64.run`
 2. Install the application: `sudo ./snx-rs-*-linux-x86_64.run`
+3. GUI app may require additional GTK 4 dependencies (apt install libgtk-4-1)
 
 ## Quick Start Guide
 
@@ -141,12 +142,12 @@ Example output (may differ for your server):
 There are two ways to use the application:
 
 * **Command Mode**: Selected by the `-m command` parameter. In this mode, the application runs as a service without establishing a connection and awaits commands from the external client. Use the `snxctl` utility to send commands to the service. This mode is recommended for desktop usage. The following commands are accepted:
-  - `connect`: Establish a connection. Parameters are taken from the `~/.config/snx-rs/snx-rs.conf` file.
-  - `disconnect`: Disconnect a tunnel.
-  - `reconnect`: Drop the connection and then reconnect.
-  - `status`: Show connection status.
-  - `info`: Show server authentication methods and supported tunnel types.
-  - Run it with the `--help` option to get usage help.
+  * `connect`: Establish a connection. Parameters are taken from the `~/.config/snx-rs/snx-rs.conf` file.
+  * `disconnect`: Disconnect a tunnel.
+  * `reconnect`: Drop the connection and then reconnect.
+  * `status`: Show connection status.
+  * `info`: Show server authentication methods and supported tunnel types.
+  * Run it with the `--help` option to get usage help.
 * **Standalone Service Mode**: Selected by the `-m standalone` parameter. This is the default mode if no parameters are specified. Run `snx-rs --help` to get help with all command line parameters. In this mode, the application takes connection parameters either from the command line or from the specified configuration file. This mode is recommended for headless usage.
 
 ## Usage Examples
@@ -202,10 +203,10 @@ Note that most IPSec servers have shorter IKE duration configured, so it may be 
 |-------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `Timeout while waiting for identity response`                                 | Check if the correct login type is specified (one of the vpn_XXX identifiers returned from the "-m info" command).                                                                      |
 | `Error sending request for url (https://IP_OR_HOSTNAME/clients/)`             | VPN server host is not reachable or certificate is untrusted. Use `ignore-server-cert` parameter to disable all HTTPS certificate checks (not recommended).                             |
-| `No session in reply`                                                         | Usually happens when Check Point server runs out of Office Mode licenses. Try the `client-mode` parameter with different values: `endpoint_security`, `secure_remote`, `secure_connect` | 
-| Unable to reach remote sites by their fully qualified names                   | VPN server does not return back the proper search domains. Use the `search-domains` option to specify DNS domains manually.                                                             | 
-| VPN tunnel is unstable and disconnects quickly                                | Set the `mtu` option to a lower value like 1280.                                                                                                                                        | 
-| Connections to remote sites are unstable, IP address changes every 10 minutes | VPN server has a short IP lease policy configured. Try the `ip-lease-time` option to manually extend it. Value must be specified in seconds.                                            | 
+| `No session in reply`                                                         | Usually happens when Check Point server runs out of Office Mode licenses. Try the `client-mode` parameter with different values: `endpoint_security`, `secure_remote`, `secure_connect` |
+| Unable to reach remote sites by their fully qualified names                   | VPN server does not return back the proper search domains. Use the `search-domains` option to specify DNS domains manually.                                                             |
+| VPN tunnel is unstable and disconnects quickly                                | Set the `mtu` option to a lower value like 1280.                                                                                                                                        |
+| Connections to remote sites are unstable, IP address changes every 10 minutes | VPN server has a short IP lease policy configured. Try the `ip-lease-time` option to manually extend it. Value must be specified in seconds.                                            |
 
 ## Contributing
 
@@ -221,9 +222,9 @@ to perform automated translation via the AI agent of choice. Tested with Zed edi
 ## Building from Sources
 
 * Install the required dependencies:
-  - Debian/Ubuntu: `sudo apt install build-essential libssl-dev libgtk-4-dev`
-  - openSUSE: `sudo zypper install libopenssl-3-devel gtk4-devel`
-  - Other distros: C compiler, OpenSSL, GTK 4 development packages
+  * Debian/Ubuntu: `sudo apt install build-essential libssl-dev libgtk-4-dev`
+  * openSUSE: `sudo zypper install libopenssl-3-devel gtk4-devel`
+  * Other distros: C compiler, OpenSSL, GTK 4 development packages
 * Install a recent [Rust compiler](https://rustup.rs)
 * Run `cargo build` to build the debug version, or `cargo build --release` to build the release version
 
@@ -236,4 +237,3 @@ Special thanks to the [cpyvpn](https://gitlab.com/cpvpn/cpyvpn) project for insp
 ## License
 
 Licensed under the [GNU Affero General Public License version 3](https://opensource.org/license/agpl-v3/).
-
