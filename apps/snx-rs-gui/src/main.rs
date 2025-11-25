@@ -132,6 +132,7 @@ async fn main() -> anyhow::Result<()> {
 
     let mut my_tray = tray::AppTray::new(&cmdline_params, tray_event_sender.clone()).await?;
     let tray_available = my_tray.has_tray();
+    let exit_on_status_close = !tray_available;
     let should_show_fallback = !tray_available && cmdline_params.command.is_none();
     if !tray_available {
         warn!("StatusNotifierWatcher not found, running without a system tray icon");
@@ -185,7 +186,7 @@ async fn main() -> anyhow::Result<()> {
                     TrayEvent::About => do_about(),
 
                     TrayEvent::Status => {
-                        do_status(tray_event_sender2.clone(), params.clone());
+                        do_status(tray_event_sender2.clone(), params.clone(), exit_on_status_close);
                     }
                 }
             }
@@ -260,9 +261,9 @@ fn do_about() {
     });
 }
 
-fn do_status(sender: mpsc::Sender<TrayEvent>, params: Arc<TunnelParams>) {
+fn do_status(sender: mpsc::Sender<TrayEvent>, params: Arc<TunnelParams>, exit_on_close: bool) {
     glib::idle_add_once(move || {
-        glib::spawn_future_local(async move { show_status_dialog(sender, params).await });
+        glib::spawn_future_local(async move { show_status_dialog(sender, params, exit_on_close).await });
     });
 }
 

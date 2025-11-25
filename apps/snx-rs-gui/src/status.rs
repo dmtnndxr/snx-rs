@@ -51,7 +51,7 @@ fn get_info(status: &anyhow::Result<ConnectionStatus>) -> ConnectionInfo {
     }
 }
 
-pub async fn show_status_dialog(sender: Sender<TrayEvent>, params: Arc<TunnelParams>) {
+pub async fn show_status_dialog(sender: Sender<TrayEvent>, params: Arc<TunnelParams>, exit_on_close: bool) {
     if let Some(dialog) = get_window("status") {
         dialog.present();
         return;
@@ -250,4 +250,7 @@ pub async fn show_status_dialog(sender: Sender<TrayEvent>, params: Arc<TunnelPar
     set_window("status", None::<Dialog>);
     dialog.close();
     let _ = stop_tx.send(());
+    if exit_on_close {
+        let _ = sender.send(TrayEvent::Exit).await;
+    }
 }
