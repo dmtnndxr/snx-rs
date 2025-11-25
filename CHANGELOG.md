@@ -1,3 +1,7 @@
+## v4.9.3astra (2025-11-25)
+
+- GUI (no-tray fallback): exit the app when the status dialog is closed so a hidden process/lock file doesn’t block relaunching the UI.
+
 ## v4.9.2astra (2025-11-24)
 
 - do not save password

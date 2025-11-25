@@ -1,6 +1,6 @@
-# **Мини-инструкция по установке snx-rs (v4.9.2astra)**
+# **Мини-инструкция по установке snx-rs (v4.9.3astra)**
 
-На странице [релиза](https://github.com/dmtnndxr/snx-rs/releases/tag/v4.9.2astra) доступны два варианта:
+На странице [релиза](https://github.com/dmtnndxr/snx-rs/releases/tag/v4.9.3astra) доступны два варианта:
 
 * **tar.xz** — архив с бинарями и скриптом `install.sh` (устанавливается вручную).
 * **.run** — самораспаковывающийся инсталлятор (тот же набор файлов), автоматически запускает `install.sh` и требует root.
@@ -29,19 +29,19 @@
 ## **1. Скачиваем инсталлятор**
 
 ```bash
-wget https://github.com/dmtnndxr/snx-rs/releases/download/v4.9.2astra/snx-rs-v4.9.2astra-linux-x86_64.run
+wget https://github.com/dmtnndxr/snx-rs/releases/download/v4.9.3astra/snx-rs-v4.9.3astra-linux-x86_64.run
 ```
 
 ## **2. Делаем файл исполняемым**
 
 ```bash
-chmod +x snx-rs-v4.9.2astra-linux-x86_64.run
+chmod +x snx-rs-v4.9.3astra-linux-x86_64.run
 ```
 
 ## **3. Запускаем установку (требует root)**
 
 ```bash
-sudo ./snx-rs-v4.9.2astra-linux-x86_64.run
+sudo ./snx-rs-v4.9.3astra-linux-x86_64.run
 ```
 
 Инсталлятор сам распакует содержимое и выполнит `install.sh`.
